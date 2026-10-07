@@ -1,7 +1,7 @@
 # Robbo
 
 <p align="center">
-  <img src="docs/images/robbo-classic-gameplay.jpg" alt="Robbo in the classic Java-reference artwork" width="760">
+  <img src="docs/images/robbo-social-preview-github.jpg" alt="Robbo social preview: a pixel-art journey through ice, desert, jungle and ocean worlds" width="760">
 </p>
 
 <p align="center">
