@@ -29,6 +29,6 @@ test('manual feature-branch builds publish only when they match an open PR head'
 test('forks and production pushes cannot publish a PR preview', () => {
   const fork = { ...pr, head: { ...pr.head, repo: { full_name: 'fork/robbo' } } };
   assert.equal(releaseContext('pull_request', { pull_request: fork }, repository, sha), null);
-  assert.equal(releaseContext('push', {}, repository, sha, 'master', [pr]), null);
+  assert.equal(releaseContext('push', {}, repository, sha, 'main', [pr]), null);
   assert.equal(releaseContext('push', {}, repository, sha, 'v1.0', [pr]), null);
 });
