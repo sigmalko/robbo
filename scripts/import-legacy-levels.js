@@ -48,6 +48,9 @@ const report = [
 for (const [file, content] of [['src/main/game/packs.ts', output], ['docs/import-diagnostics.md', report]]) {
   if (process.argv.includes('--check')) {
     if (fs.readFileSync(file, 'utf8') !== content) throw Error(`${file} is stale; run npm run import:levels`);
-  } else fs.writeFileSync(file, content);
+  } else {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, content);
+  }
 }
 console.log(`Imported ${packs.reduce((n, p) => n + p.levels.length, 0)} maps; ${diagnostics.length} stale records reported.`);

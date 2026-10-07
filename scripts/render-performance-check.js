@@ -8,7 +8,7 @@ async function main() {
   try {
     const page = await browser.newPage({ viewport: { width: 1920, height: 920 }, deviceScaleFactor: 1.25 });
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    await page.goto(pathToFileURL(path.resolve('release/Robbo-Game/index.html')).href + '#test');
+    await page.goto(pathToFileURL(path.resolve('release/robbo/index.html')).href + '#test');
     await page.waitForFunction(() => !!window.robboTest);
     const rows = Array.from({ length: 31 }, (_, y) => y === 1 ? 'sR.............s' : y % 2 ? 's..............s' : 'ssssssssssssssss');
     const cdp = await page.context().newCDPSession(page);

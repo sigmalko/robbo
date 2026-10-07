@@ -10,7 +10,7 @@ async function main() {
   try {
     await new Promise((resolve, reject) => { server.stdout.once('data', resolve); server.once('error', reject); });
     browser = await chromium.launch({ executablePath: process.env.ROBBO_CHROMIUM, args: ['--no-sandbox'] });
-    for (const url of ['http://127.0.0.1:8080/', pathToFileURL(path.resolve('release/Robbo-Game/index.html')).href]) {
+    for (const url of ['http://127.0.0.1:8080/', pathToFileURL(path.resolve('release/robbo/index.html')).href]) {
       const page = await browser.newPage();
       const errors = []; page.on('pageerror', error => errors.push(error.message));
       await page.goto(url + '#test');
