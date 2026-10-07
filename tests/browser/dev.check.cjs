@@ -1,22 +1,32 @@
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
+const http = require('node:http');
 const { chromium } = require('playwright');
+
+function serverIsReady(url, timeout = 30_000) {
+  const deadline = Date.now() + timeout;
+  return new Promise((resolve, reject) => {
+    const tryRequest = () => {
+      const request = http.get(url, response => {
+        response.resume();
+        if (response.statusCode === 200) resolve();
+        else retry(Error(`Vite returned ${response.statusCode}`));
+      });
+      request.on('error', retry);
+    };
+    const retry = error => {
+      if (Date.now() >= deadline) reject(Error(`Vite did not respond within 30 seconds: ${error.message}`));
+      else setTimeout(tryRequest, 250);
+    };
+    tryRequest();
+  });
+}
 
 async function main() {
   const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '8082', '--strictPort'], { stdio: ['ignore', 'pipe', 'inherit'] });
   let browser;
   try {
-    await new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => reject(Error('Vite did not start within 15 seconds')), 15000);
-      const finish = callback => value => { clearTimeout(timeout); callback(value); };
-      let output = '';
-      server.stdout.on('data', chunk => {
-        output += chunk;
-        if (output.includes('http://127.0.0.1:8082/')) finish(resolve)();
-      });
-      server.once('error', finish(reject));
-      server.once('exit', finish(code => reject(Error(`Vite exited: ${code}`))));
-    });
+    await serverIsReady('http://127.0.0.1:8082/');
     browser = await chromium.launch({ executablePath: process.env.ROBBO_CHROMIUM });
     const page = await browser.newPage();
     const errors = [];
