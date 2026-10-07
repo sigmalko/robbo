@@ -7,7 +7,7 @@ async function main() {
   try {
     const page = await browser.newPage();
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    await page.goto(pathToFileURL(path.resolve('release/Robbo-Game/index.html')).href);
+    await page.goto(pathToFileURL(path.resolve('release/robbo/index.html')).href);
     await page.locator('#planet').selectOption('6');
     await page.locator('#mute').check(); await page.locator('#volume').fill('20'); await page.locator('#volume').dispatchEvent('input');
     await page.reload();

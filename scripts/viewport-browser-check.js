@@ -11,7 +11,7 @@ async function main() {
       const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: touch, deviceScaleFactor: 3 });
       const page = await context.newPage();
       const errors = []; page.on('pageerror', error => errors.push(error.message));
-      await page.goto(pathToFileURL(path.resolve('release/Robbo-Game/index.html')).href + '#test');
+      await page.goto(pathToFileURL(path.resolve('release/robbo/index.html')).href + '#test');
       await page.waitForFunction(() => !!window.robboTest);
       await page.evaluate(() => window.robboTest.load(Array.from({ length: 80 }, (_, y) => '.'.repeat(79) + (y === 79 ? 'R' : '.'))));
       await page.selectOption('#theme', theme);
