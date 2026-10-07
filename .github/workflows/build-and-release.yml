@@ -16,9 +16,40 @@ permissions:
   id-token: write
 
 jobs:
+  browser-tests:
+    # The image version must match Playwright in package-lock.json. It contains
+    # Chromium, Firefox and their Linux dependencies, so CI never installs them
+    # from external mirrors while validating a pull request.
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24.x"
+          check-latest: true
+          cache: npm
+      - run: npm ci
+      - run: npm run package
+      - run: npm run test:dev
+      - run: node tests/browser/browser.check.cjs
+      - run: node tests/browser/input.check.cjs
+      - run: node tests/browser/session.check.cjs
+      - run: node tests/browser/viewport.check.cjs
+      - run: node tests/browser/artwork.check.cjs
+      - run: node tests/browser/render-performance.check.cjs
+      - name: Check viewport layout in Firefox
+        run: node tests/browser/viewport.check.cjs
+        env:
+          ROBBO_BROWSER: firefox
+
   build:
     # Keep failures bounded even when an external package mirror stalls.
     timeout-minutes: 45
+    needs: browser-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -40,25 +71,6 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - run: npm test
-      # Separate apt packages from browser downloads so a timeout identifies
-      # the failing external dependency.
-      - name: Install Playwright system dependencies
-        run: npx playwright install-deps chromium firefox
-        timeout-minutes: 10
-      - name: Download Playwright browsers
-        run: npx playwright install chromium firefox
-        timeout-minutes: 10
-      - run: npm run test:dev
-      - run: npm run test:browser
-      - run: npm run test:input
-      - run: npm run test:session-browser
-      - run: npm run test:viewport
-      - run: npm run test:artwork
-      - run: node tests/browser/render-performance.check.cjs
-      - name: Check viewport layout in Firefox
-        run: node tests/browser/viewport.check.cjs
-        env:
-          ROBBO_BROWSER: firefox
       - run: npm run package
       - run: cd release && zip -r robbo.zip robbo
 
