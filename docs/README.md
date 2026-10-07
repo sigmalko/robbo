@@ -1,6 +1,6 @@
 # Documentation
 
-- [Setup and commands](../README.md)
+- [Development, local play and validation](development.md)
 - [Contributing](../CONTRIBUTING.md)
 - [Architecture and module boundaries](architecture.md)
 - [Campaign import and candidate requirements](campaign-import.md)
