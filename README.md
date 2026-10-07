@@ -1,66 +1,54 @@
 # Robbo
 
-Browser game with two historical campaigns of 56 planets each, deterministic
-replays, keyboard/gamepad/touch controls and switchable artwork.
+<p align="center">
+  <img src="docs/images/robbo-classic-gameplay.jpg" alt="Robbo in the classic Java-reference artwork" width="760">
+</p>
 
-## Run locally
+<p align="center">
+  A browser restoration of <strong>Robbo</strong> — two historical campaigns,
+  56 planets each, and a choice of artwork while you play.
+</p>
 
-Use Node **>=24.21.0 <25** (see `package.json` and `.nvmrc`). From the repository root:
+<p align="center">
+  <a href="docs/development.md#play-locally">Play locally</a>
+  &nbsp;·&nbsp;
+  <a href="docs/README.md">Documentation</a>
+</p>
 
-```sh
-npm ci
-npm start
-```
+## The mission
 
-Open http://127.0.0.1:8080. To build the portable game:
+Collect every screw, avoid hazards, unlock routes and reach the ship. Robbo
+supports keyboard, gamepad and touch controls, as well as deterministic
+replays for sharing or investigating a run.
 
-```sh
-npm run package
-```
+<p align="center">
+  <strong>↑ ← ↓ →</strong> move &nbsp;·&nbsp; <strong>Ctrl + arrow</strong> fire &nbsp;·&nbsp; <strong>R</strong> retry &nbsp;·&nbsp; <strong>P</strong> pause
+</p>
 
-Open `release/robbo/index.html` directly, or run `npm run preview` and open
-http://127.0.0.1:8080. Stop the development server before starting the preview;
-both use port 8080. `dist` and `release` are generated, ignored directories.
-Packaging deliberately produces a self-contained IIFE so the game works through
-`file://`, as well as on GitHub Pages.
+## Four worlds, four moods
 
-## Validate
+<p align="center">
+  <img src="docs/images/robbo-ice-moon-gameplay.jpg" alt="Ice Moon artwork on planet 12" width="49%">
+  <img src="docs/images/robbo-jungle-gameplay.jpg" alt="Jungle Planet artwork on planet 1" width="49%">
+</p>
 
-```sh
-npm test
-npm run test:tooling
-npm run package
-npx playwright install chromium firefox
-npm run test:dev
-npm run test:browser
-npm run test:input
-npm run test:session-browser
-npm run test:viewport
-npm run test:artwork
-npm run test:performance
-```
+<p align="center">
+  <em>Ice Moon · planet 12</em> &nbsp;·&nbsp; <em>Jungle Planet · planet 1</em>
+</p>
 
-The release browser commands package the game first; `test:dev` starts Vite
-on port 8082 and checks the development entrypoint. To test an already built release,
-run the corresponding `tests/browser/*.check.cjs` with Node. Run those checks
-sequentially: some start a server on port 8080. Set `ROBBO_BROWSER=firefox` for
-the additional viewport check; `ROBBO_CHROMIUM` optionally selects a Chromium executable.
+<p align="center">
+  <img src="docs/images/robbo-red-desert-gameplay.jpg" alt="Red Desert artwork on planet 24" width="49%">
+  <img src="docs/images/robbo-ocean-world-gameplay.jpg" alt="Ocean World artwork on planet 35" width="49%">
+</p>
 
-## Repository map
+<p align="center">
+  <em>Red Desert · planet 24</em> &nbsp;·&nbsp; <em>Ocean World · planet 35</em>
+</p>
 
-| Directory | Responsibility |
-| --- | --- |
-| `src/engine` | Game rules and world state |
-| `src/application` | Sessions and deterministic replay |
-| `src/browser` | Input, audio and persistence |
-| `src/presentation` | Canvas, themes and messages |
-| `src/app` | Browser startup and controllers |
-| `src/generated` | Imported campaign data; never edit manually |
-| `website` | Shipped HTML, CSS and assets |
-| `resources` | Canonical maps and source artwork |
-| `archive` | Unused assets retained outside the release |
-| `tests` | Unit, integration, browser and tooling checks |
-| `scripts` | Data import, release and development tools |
+## Documentation
 
-See [architecture](docs/architecture.md), [campaign import](docs/campaign-import.md),
-[contributing](CONTRIBUTING.md) and the [documentation index](docs/README.md).
+Technical material lives in the [documentation index](docs/README.md):
+[local play, builds and validation](docs/development.md),
+[architecture](docs/architecture.md),
+[campaign import](docs/campaign-import.md), and
+[contributing](CONTRIBUTING.md).
