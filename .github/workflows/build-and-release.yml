@@ -17,6 +17,8 @@ permissions:
 
 jobs:
   build:
+    # Keep failures bounded even when an external package mirror stalls.
+    timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -38,7 +40,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
       - run: npm test
-      - run: npx playwright install --with-deps chromium firefox
+      # Separate apt packages from browser downloads so a timeout identifies
+      # the failing external dependency.
+      - name: Install Playwright system dependencies
+        run: npx playwright install-deps chromium firefox
+        timeout-minutes: 10
+      - name: Download Playwright browsers
+        run: npx playwright install chromium firefox
+        timeout-minutes: 10
       - run: npm run test:dev
       - run: npm run test:browser
       - run: npm run test:input
