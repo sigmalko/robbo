@@ -16,7 +16,40 @@ permissions:
   id-token: write
 
 jobs:
+  browser-tests:
+    # The image version must match Playwright in package-lock.json. It contains
+    # Chromium, Firefox and their Linux dependencies, so CI never installs them
+    # from external mirrors while validating a pull request.
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "24.x"
+          check-latest: true
+          cache: npm
+      - run: npm ci
+      - run: npm run package
+      - run: npm run test:dev
+      - run: node tests/browser/browser.check.cjs
+      - run: node tests/browser/input.check.cjs
+      - run: node tests/browser/session.check.cjs
+      - run: node tests/browser/viewport.check.cjs
+      - run: node tests/browser/artwork.check.cjs
+      - run: node tests/browser/render-performance.check.cjs
+      - name: Check viewport layout in Firefox
+        run: node tests/browser/viewport.check.cjs
+        env:
+          ROBBO_BROWSER: firefox
+
   build:
+    # Keep failures bounded even when an external package mirror stalls.
+    timeout-minutes: 45
+    needs: browser-tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -30,25 +63,14 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: node --test scripts/pr-release.test.js
+      - run: npm run test:tooling
       - name: Set preview metadata path
         run: echo "ROBBO_RELEASE_CONTEXT=$RUNNER_TEMP/robbo-release.json" >> "$GITHUB_ENV"
       - name: Identify pull request preview
-        run: node scripts/pr-release.js prepare
+        run: node scripts/release/pr-release.cjs prepare
         env:
           GH_TOKEN: ${{ github.token }}
       - run: npm test
-      - run: npx playwright install --with-deps chromium firefox
-      - run: npm run test:browser
-      - run: npm run test:input
-      - run: npm run test:session-browser
-      - run: npm run test:viewport
-      - run: npm run test:artwork
-      - run: node scripts/render-performance-check.js
-      - name: Check viewport layout in Firefox
-        run: node scripts/viewport-browser-check.js
-        env:
-          ROBBO_BROWSER: firefox
       - run: npm run package
       - run: cd release && zip -r robbo.zip robbo
 
@@ -69,7 +91,7 @@ jobs:
 
       - name: Publish pull request preview
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-        run: node scripts/pr-release.js publish
+        run: node scripts/release/pr-release.cjs publish
         env:
           GH_TOKEN: ${{ github.token }}
 

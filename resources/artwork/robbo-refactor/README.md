@@ -6,6 +6,6 @@ These files were relocated byte-for-byte from `legacy/robbo-refactor`.
 production artwork. The shipped Java atlas is `website/legacy-icons32.png`.
 
 Current historical layouts use 410×274 atlases. Validate coordinates, palettes
-and all frames before using this alternative artwork. See the
-[prototype analysis](../../../docs/javascript-prototype.md) and the active
-[artwork pipeline](../../../docs/artwork-pipeline.md).
+and all frames before using this alternative artwork. See the active
+[artwork pipeline](../../../website/artwork/README.md) and
+[module architecture](../../../docs/architecture.md).

@@ -2,7 +2,7 @@
 
 These are the unchanged historical map files, relocated from `legacy/RobboNormal/src/robbo/world/levels/`. They are active game data, not an outstanding migration task. Both packs contain 56 planets; pack 02 remains the default.
 
-`npm run import:levels` generates `src/main/game/packs.ts` and `docs/import-diagnostics.md`. `npm run check:levels` checks those outputs on every build. Keep the original metadata, including the stale records documented by the importer; do not simplify puzzles to make them pass.
+`npm run import:levels` generates `src/generated/packs.ts` and `docs/import-diagnostics.md`. `npm run check:levels` checks those outputs on every build. Keep the original metadata, including the stale records documented by the importer; do not simplify puzzles to make them pass.
 
 | File | SHA-256 |
 | --- | --- |
@@ -17,5 +17,4 @@ The original files remain available in [the merged implementation commit](https:
 was relocated byte-for-byte from the supplemental JavaScript prototype. It is
 not listed in `packs.json` and is not imported or shipped as a playable pack.
 Its row counts, ending, extra symbols and palettes need explicit validation; see
-[the prototype analysis](../../docs/javascript-prototype.md) and
 [candidate-pack requirements](../../docs/campaign-import.md#candidate-packs).
