@@ -1,0 +1,82 @@
+/** Stable English source strings. Catalogs are data, never HTML markup. */
+export const english = {
+  'exit.ready': 'Ship ready: enter the flashing ship to complete this planet.',
+  'progress.reset': 'Reset saved progress',
+  'preferences.reset': 'Reset sound preferences',
+  'artwork.unavailable': 'Artwork unavailable. Reload the game to try again.',
+  "ui.intro": "Find the screws. Reach the ship.",
+  "label.select.planet": "Select planet",
+  "label.robbo.game": "Robbo game",
+  "label.game.board.use.arrow.keys.to.move.and.control": "Game board. Use arrow keys to move and Control plus arrow to fire.",
+  "label.inventory": "Inventory",
+
+  "ui.robbo.56.planets": "Robbo — 56 planets",
+  "ui.a.journey.through.56.planets": "A journey through 56 planets",
+  "ui.robbo": "ROBBO",
+  "ui.watch.your.step": "Watch your step.",
+  "ui.start.game": "Start game",
+  "ui.restart.planet": "Restart planet",
+  "ui.pause": "Pause",
+  "ui.fullscreen": "Fullscreen",
+  "ui.robbo.i.edited.legacy": "Robbo I · edited legacy",
+  "ui.robbo.i.original.legacy": "Robbo I · original legacy",
+  "ui.screws.left": "Screws left",
+  "ui.keys": "Keys",
+  "ui.ammo": "Ammo",
+  "ui.planet": "Planet",
+  "ui.of.56": "of 56",
+  "ui.enable.sound": "Enable sound",
+  "ui.mute": " Mute",
+  "ui.ctrl": "Ctrl",
+  "ui.r": "R",
+  "ui.p": "P",
+  "ui.how.to.play": "How to play",
+  "help.overview.inventory": "Pick up ammunition for 9 shots. Keys open one door each; enter it on your next step. Push boxes, bombs, question boxes and an inactive ship into free space. Shoot sand to clear a path. A question box reveals a random object after it is shot.",
+  "help.overview.hazards": "Enemies, bullets, flames, lasers, rivers and magnets can kill Robbo. Mirrors teleport between linked destinations. Bombs trigger nearby bombs. A destroyed required screw or ship can make a planet impossible to finish: press R to retry. Retries are unlimited.",
+  "help.overview.campaigns": "The planet selector lets you revisit any stage. Each campaign contains the same 56 planets with a few historical layout differences; inventories reset between planets.",
+  "ui.credits": "Original levels by Janusz Pelc · Java legacy mechanics restored in TypeScript",
+  "ui.campaign.label": "Campaign ",
+  "ui.planet.label": "Planet ",
+  "ui.mute.label": " Mute",
+  "ui.volume.label": "Volume ",
+  "ui.collected.suffix": " collected",
+  "ui.move.label": "Move  ",
+  "ui.fire.label": "+ arrow Fire  ",
+  "ui.retry.label": "Retry  ",
+  "ui.pause.label": "Pause",
+
+  'canvas.unsupported': 'This browser does not support canvas rendering.',
+  'planet.info': 'Planet {planet} / {total} · {author}{notes}',
+  'action.resume': 'Resume', 'action.pause': 'Pause', 'action.new': 'New campaign',
+  'action.start': 'Start game', 'action.again': 'Play again', 'action.retry': 'Retry planet',
+  'state.ready': 'Ready, Robbo?', 'state.readyHelp': 'Collect every required screw, then enter the flashing ship.',
+  'state.complete': 'Journey complete!', 'state.completeHelp': 'You have reached the end of all {total} planets. Explore the other campaign or play again.',
+  'state.paused': 'Paused', 'state.pausedHelp': 'Your planet is waiting.',
+  'state.dead': 'Robbo lost', 'state.deadHelp': 'Try again. Your next attempt starts on this planet.',
+  'state.won': 'All screws secured', 'state.final': 'Completing the journey…', 'state.next': 'Flying to the next planet…',
+  'fullscreen.unavailable': 'Fullscreen is unavailable in this browser.',
+  'fullscreen.failed': 'Fullscreen could not be opened. You can continue playing.',
+  'help.title': 'Objects and hazards — active Java rules',
+  'help.weapons.title': 'Ammunition and weapons',
+  'help.weapons.body': 'An ammunition pickup adds nine shots, up to 99. Control plus an arrow fires in that direction. A shot into a wall still consumes ammunition. Sand can be shot away; lasers and flames are lethal.',
+  'help.screws.title': 'Screws and the ship',
+  'help.screws.body': 'Collect the required number of screws to activate the ship. Destroying a screw does not count as collecting it. An inactive ship can be pushed; enter the flashing ship to finish. Retry if required objects are destroyed.',
+  'help.doors.title': 'Keys and doors',
+  'help.doors.body': 'Each key opens one door. Opening uses the key but does not move Robbo into the doorway until the next action. Keys are capped at 99. Doors survive explosions in these campaigns.',
+  'help.teleports.title': 'Mirrors and teleports',
+  'help.teleports.body': 'Mirrors transfer Robbo between linked destinations. The destination must have a free exit. Controls are suppressed during materialization. Mirrors survive explosions under Java rules.',
+  'help.magnets.title': 'Magnets',
+  'help.magnets.body': 'A magnet pulls Robbo along its unobstructed facing line and locks movement while pulling. Its mouth is lethal. Place an obstruction in the line to break attraction; magnets do not attract other objects.',
+  'help.hazards.title': 'Enemies, rivers and bombs',
+  'help.hazards.body': 'Bear, worm and eyes adjacency is lethal; birds kill on contact. Rivers absorb objects and kill Robbo. Shooting a bomb triggers a staged nearby explosion and bomb chains. Retries are unlimited; optional GNU rules are not active.',
+} as const;
+export type TextKey = keyof typeof english;
+export type TranslationCatalog = Partial<Record<TextKey, string>>;
+/** An incomplete or malformed translation falls back as a whole to English. */
+export function text(key: TextKey, values: Record<string, string | number> = {}, catalog: TranslationCatalog = {}): string {
+  const source: string = english[key];
+  const required = [...source.matchAll(/\{(\w+)\}/g)].map(match => match[1]);
+  const candidate = catalog[key];
+  const usable = typeof candidate === 'string' && candidate.trim() && required.every(name => candidate.includes(`{${name}}`)) && [...candidate.matchAll(/\{(\w+)\}/g)].every(match => required.includes(match[1]));
+  return (usable ? candidate : source).replace(/\{(\w+)\}/g, (_, name: string) => String(values[name] ?? `{${name}}`));
+}

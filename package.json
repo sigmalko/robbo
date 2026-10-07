@@ -1,0 +1,30 @@
+{
+  "name": "robbo-game-typescript",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser version of Robbo built from TypeScript",
+  "engines": { "node": ">=24.21.0 <25" },
+  "scripts": {
+    "import:levels": "node scripts/import-legacy-levels.js",
+    "check:levels": "node scripts/import-legacy-levels.js --check",
+    "build": "npm run check:levels && tsc --noEmit && tsc --project tsconfig-game.json && vite build",
+    "test": "vitest run",
+    "test:input": "npm run package && node scripts/input-browser-smoke.js",
+    "test:session-browser": "npm run package && node scripts/session-browser-check.js",
+    "test:viewport": "npm run package && node scripts/viewport-browser-check.js",
+    "test:browser": "npm run package && node scripts/browser-smoke.js",
+    "test:artwork": "npm run package && node scripts/artwork-browser-check.js",
+    "test:performance": "npm run package && node scripts/render-performance-check.js",
+    "capture:artwork": "npm run package && node scripts/capture-artwork-review.js",
+    "package": "npm run build && node scripts/package-release.js",
+    "start": "vite --host 127.0.0.1 --port 8080 --strictPort"
+  },
+  "devDependencies": {
+    "@types/jquery": "4.0.1",
+    "jquery": "4.0.0",
+    "playwright": "1.63.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}

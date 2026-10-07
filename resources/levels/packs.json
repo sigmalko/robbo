@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "defaultPack": "02",
+  "packs": [
+    { "id": "02", "file": "robbo02.dat", "expectedLevels": 56, "width": 16, "height": 31, "allowStaleMetadata": true, "duplicateMetadata": "last-wins" },
+    { "id": "01", "file": "robbo01.dat", "expectedLevels": 56, "width": 16, "height": 31, "allowStaleMetadata": true, "duplicateMetadata": "last-wins" }
+  ]
+}

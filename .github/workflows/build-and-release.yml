@@ -1,0 +1,78 @@
+name: Build and release Robbo
+
+on:
+  pull_request:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          check-latest: true
+          cache: npm
+
+      - run: npm ci
+      - run: node --test scripts/pr-release.test.js
+      - name: Set preview metadata path
+        run: echo "ROBBO_RELEASE_CONTEXT=$RUNNER_TEMP/robbo-release.json" >> "$GITHUB_ENV"
+      - name: Identify pull request preview
+        run: node scripts/pr-release.js prepare
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - run: npm test
+      - run: npx playwright install --with-deps chromium firefox
+      - run: npm run test:browser
+      - run: npm run test:input
+      - run: npm run test:session-browser
+      - run: npm run test:viewport
+      - run: npm run test:artwork
+      - run: node scripts/render-performance-check.js
+      - name: Check viewport layout in Firefox
+        run: node scripts/viewport-browser-check.js
+        env:
+          ROBBO_BROWSER: firefox
+      - run: npm run package
+      - run: cd release && zip -r Robbo-Game.zip Robbo-Game
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Robbo-Game
+          path: release/Robbo-Game.zip
+
+      - name: Publish pull request preview
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        run: node scripts/pr-release.js publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Create GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            release_tag="$GITHUB_REF_NAME"
+          else
+            release_tag="build-$GITHUB_SHA"
+          fi
+          if gh release view "$release_tag" >/dev/null 2>&1; then
+            gh release upload "$release_tag" release/Robbo-Game.zip --clobber
+          else
+            gh release create "$release_tag" release/Robbo-Game.zip --target "$GITHUB_SHA" --title "Robbo $release_tag" --generate-notes --latest
+          fi
