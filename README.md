@@ -1,7 +1,32 @@
 # Robbo
 
-Browser game with two historical campaigns of 56 planets each, deterministic
-replays, keyboard/gamepad/touch controls and switchable artwork.
+<p align="center">
+  <img src="docs/images/robbo-jungle-gameplay.jpg" alt="Robbo on the Jungle Planet board" width="760">
+</p>
+
+<p align="center">
+  A browser restoration of <strong>Robbo</strong>: two historical campaigns,
+  56 planets each, and artwork that can be switched while you play.
+</p>
+
+<p align="center">
+  <strong>↑ ← ↓ →</strong> move &nbsp;·&nbsp; <strong>Ctrl + arrow</strong> fire &nbsp;·&nbsp; <strong>R</strong> retry &nbsp;·&nbsp; <strong>P</strong> pause
+</p>
+
+## See the game
+
+<p align="center">
+  <img src="docs/images/robbo-classic-gameplay.jpg" alt="Classic Java-reference artwork in Robbo" width="49%">
+  <img src="docs/images/robbo-neon-gameplay.jpg" alt="Neon Forge artwork in Robbo" width="49%">
+</p>
+
+<p align="center">
+  <em>Java reference</em> &nbsp;·&nbsp; <em>Neon Forge</em>
+</p>
+
+Collect every screw, avoid hazards, unlock routes and reach the ship. The game
+supports keyboard, gamepad and touch controls, deterministic replays, and a
+choice of preserved and modern artwork themes.
 
 ## Run locally
 
