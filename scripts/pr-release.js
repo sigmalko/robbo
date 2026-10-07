@@ -14,7 +14,7 @@ function releaseContext(eventName, event, repository, sha, refName, openPulls = 
     return {
       tag: `pr-${number}-${sha}`, title: `Robbo PR #${number} · ${branch} · ${sha.slice(0, 12)}`,
       prerelease: true, sha, pr: number, prUrl, branch, branchUrl, commitUrl,
-      notes: `Preview build for testing before merge. Report feedback on the linked pull request.\n\n- Pull request: ${prUrl}\n- Branch: [${branch}](${branchUrl})\n- Built commit: ${commitUrl}\n\nDownload Robbo-Game.zip, extract it, and open Robbo-Game/index.html. This release does not merge the pull request.\n`
+      notes: `Preview build for testing before merge. Report feedback on the linked pull request.\n\n- Pull request: ${prUrl}\n- Branch: [${branch}](${branchUrl})\n- Built commit: ${commitUrl}\n\nDownload robbo.zip, extract it, and open robbo/index.html. This release does not merge the pull request.\n`
     };
   }
   return null;
@@ -43,9 +43,9 @@ function main() {
   try { gh(['release', 'view', context.tag]); exists = true; } catch { /* First build of this commit. */ }
   if (exists) {
     gh(['release', 'edit', context.tag, '--title', context.title, '--notes-file', notesPath, '--prerelease', '--latest=false']);
-    gh(['release', 'upload', context.tag, 'release/Robbo-Game.zip', '--clobber']);
+    gh(['release', 'upload', context.tag, 'release/robbo.zip', '--clobber']);
   } else {
-    gh(['release', 'create', context.tag, 'release/Robbo-Game.zip', '--target', context.sha, '--title', context.title, '--notes-file', notesPath, '--prerelease', '--latest=false']);
+    gh(['release', 'create', context.tag, 'release/robbo.zip', '--target', context.sha, '--title', context.title, '--notes-file', notesPath, '--prerelease', '--latest=false']);
   }
   console.log(`Published ${context.tag} for ${context.prUrl}`);
 }

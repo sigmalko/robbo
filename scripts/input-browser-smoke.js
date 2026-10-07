@@ -9,7 +9,7 @@ const { chromium } = require('playwright');
     const context = await browser.newContext({ viewport: { width: 800, height: 900 }, hasTouch: true });
     const page = await context.newPage();
     const errors = []; page.on('pageerror', error => errors.push(error.message));
-    await page.goto(pathToFileURL(path.resolve('release/Robbo-Game/index.html')).href + '#test');
+    await page.goto(pathToFileURL(path.resolve('release/robbo/index.html')).href + '#test');
     await page.evaluate(() => { window.robboTest.load(['ssssssss', 'sR.....s', 's......s', 'ssssssss']); window.robboTest.inventory(9); });
     await page.locator('.touch-controls').scrollIntoViewIfNeeded();
     const point = async selector => { const box = await page.locator(selector).boundingBox(); return { x: box.x + box.width / 2, y: box.y + box.height / 2 }; };

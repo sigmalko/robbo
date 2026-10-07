@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const root = process.cwd();
-const releaseRoot = path.join(root, "release", "Robbo-Game");
+const releaseRoot = path.join(root, "release", "robbo");
 
 fs.rmSync(releaseRoot, { recursive: true, force: true });
 fs.mkdirSync(path.join(releaseRoot, "dist"), { recursive: true });
@@ -13,7 +13,8 @@ fs.cpSync(path.join(root, "website"), releaseRoot, {
 });
 fs.copyFileSync(path.join(root, "dist", "robbo.js"), path.join(releaseRoot, "dist", "robbo.js"));
 fs.copyFileSync(path.join(root, "dist", "robbo.js.map"), path.join(releaseRoot, "dist", "robbo.js.map"));
-fs.copyFileSync(path.join(root, "LICENSE"), path.join(releaseRoot, "LICENSE"));
+const license = path.join(root, "LICENSE");
+if (fs.existsSync(license)) fs.copyFileSync(license, path.join(releaseRoot, "LICENSE"));
 fs.copyFileSync(
   path.join(root, "node_modules", "jquery", "LICENSE.txt"),
   path.join(releaseRoot, "jquery-LICENSE.txt")

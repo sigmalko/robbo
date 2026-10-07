@@ -6,7 +6,7 @@ const { spawn } = require('node:child_process');
 const { chromium } = require('playwright');
 
 async function main() {
-  const root = path.resolve('release/Robbo-Game');
+  const root = path.resolve('release/robbo');
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   for (const [, reference] of html.matchAll(/(?:src|href)="([^"]+)"/g)) {
     const resource = path.resolve(root, reference);
