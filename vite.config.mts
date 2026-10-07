@@ -10,7 +10,7 @@ export default defineConfig({
     target: "es2022",
     sourcemap: true,
     lib: {
-      entry: "main.ts",
+      entry: "../src/app/main.ts",
       name: "RobboGame",
       formats: ["iife"],
       fileName: () => "robbo.js"

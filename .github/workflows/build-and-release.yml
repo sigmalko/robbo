@@ -30,11 +30,11 @@ jobs:
           cache: npm
 
       - run: npm ci
-      - run: node --test scripts/pr-release.test.js
+      - run: npm run test:tooling
       - name: Set preview metadata path
         run: echo "ROBBO_RELEASE_CONTEXT=$RUNNER_TEMP/robbo-release.json" >> "$GITHUB_ENV"
       - name: Identify pull request preview
-        run: node scripts/pr-release.js prepare
+        run: node scripts/release/pr-release.cjs prepare
         env:
           GH_TOKEN: ${{ github.token }}
       - run: npm test
@@ -44,9 +44,9 @@ jobs:
       - run: npm run test:session-browser
       - run: npm run test:viewport
       - run: npm run test:artwork
-      - run: node scripts/render-performance-check.js
+      - run: node tests/browser/render-performance.check.cjs
       - name: Check viewport layout in Firefox
-        run: node scripts/viewport-browser-check.js
+        run: node tests/browser/viewport.check.cjs
         env:
           ROBBO_BROWSER: firefox
       - run: npm run package
@@ -69,7 +69,7 @@ jobs:
 
       - name: Publish pull request preview
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-        run: node scripts/pr-release.js publish
+        run: node scripts/release/pr-release.cjs publish
         env:
           GH_TOKEN: ${{ github.token }}
 

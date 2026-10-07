@@ -1,7 +1,13 @@
 # Propozycja organizacji projektu Robbo
 
-Status: **do dyskusji i zatwierdzenia**. Audyt: 2026-10-07, baza `8969890`.
-Ten PR opisuje docelowy układ i migrację; nie wykonuje przenosin kodu.
+Status: **wdrożone w PR #4**. Audyt: 2026-10-07, baza `8969890`.
+
+Poniżej zachowano pierwotną propozycję i uzasadnienie. Na polecenie właściciela
+wdrożenie wykonano w tym samym PR, zamiast w osobnych PR-ach. Aktualny stan
+opisuje [architektura](architecture.md), a komendy — [README](../README.md).
+Usunięto nieużywaną implementację i jQuery, przeniesiono moduły oraz testy,
+wydzielono kontrolery, renderer, kamerę i adapter storage. Silnika reguł
+nie dzielono dalej. Wszystkie aktywne źródła podlegają strict TypeScript.
 
 ## Rekomendacja
 
@@ -226,6 +232,6 @@ ponieważ zmiana kolejności aktualizacji może zmienić powtórki i zagadki.
   linki dokumentacji działają, wygenerowane pliki są odtwarzalne, a strict
   obejmuje cały aktywny kod. Docelowo dodać automatyczną kontrolę granic importów.
 
-Powyższa lista dotyczy **wdrożenia migracji**. Ten dokumentacyjny PR wymaga
-sprawdzenia zgodności propozycji z repozytorium i poprawności diffu; nie dowodzi
-jeszcze poprawności przyszłego refaktoringu.
+Powyższa lista stanowi plan weryfikacji migracji. Wyniki dla wdrożenia
+są podane w opisie PR #4; historyczne ścieżki w tym dokumencie służą
+wyłącznie do odtworzenia mapy przenosin.

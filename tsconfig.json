@@ -5,9 +5,9 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM"],
     "noEmit": true,
-    "strict": false,
+    "strict": true,
     "skipLibCheck": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*.ts", "website/main.ts"]
+  "include": ["src/**/*.ts"]
 }

@@ -1,0 +1,5 @@
+# Generated text must compare byte-for-byte on Windows and Linux.
+* text=auto
+*.ts text eol=lf
+*.md text eol=lf
+*.dat -text
