@@ -31,6 +31,7 @@ npm test
 npm run test:tooling
 npm run package
 npx playwright install chromium firefox
+npm run test:dev
 npm run test:browser
 npm run test:input
 npm run test:session-browser
@@ -39,7 +40,8 @@ npm run test:artwork
 npm run test:performance
 ```
 
-The browser commands package the game first. To test an already built release,
+The release browser commands package the game first; `test:dev` starts Vite
+on port 8082 and checks the development entrypoint. To test an already built release,
 run the corresponding `tests/browser/*.check.cjs` with Node. Run those checks
 sequentially: some start a server on port 8080. Set `ROBBO_BROWSER=firefox` for
 the additional viewport check; `ROBBO_CHROMIUM` optionally selects a Chromium executable.

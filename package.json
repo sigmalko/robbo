@@ -21,7 +21,8 @@
     "package": "npm run build && node scripts/release/package-release.cjs",
     "start": "vite --host 127.0.0.1 --port 8080 --strictPort",
     "test:tooling": "node --test tests/tooling/*.test.cjs",
-    "preview": "node scripts/dev/serve.cjs"
+    "preview": "node scripts/dev/serve.cjs",
+    "test:dev": "node tests/browser/dev.check.cjs"
   },
   "devDependencies": {
     "playwright": "1.63.0",

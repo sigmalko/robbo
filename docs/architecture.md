@@ -32,7 +32,9 @@ the camera and sprite-frame mapping are separate modules. Storage helpers are
 shared by the campaign and preference stores without coupling those stores.
 
 `website` holds shipped HTML/CSS/assets, while TypeScript lives in `src`. Vite
-uses `website` as its root and `src/app/main.ts` as its library entry. The release
+uses `website` as its root and `src/app/main.ts` as its library entry.
+HTML's `/src` URL is mapped to the repository's source directory by a Vite alias;
+`test:dev` verifies this separately from the portable package. The release
 tool copies static files, includes the IIFE and replaces the development module
 tag. `release/robbo` is both the offline package and the GitHub Pages artifact.
 

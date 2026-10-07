@@ -39,6 +39,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
       - run: npm test
       - run: npx playwright install --with-deps chromium firefox
+      - run: npm run test:dev
       - run: npm run test:browser
       - run: npm run test:input
       - run: npm run test:session-browser

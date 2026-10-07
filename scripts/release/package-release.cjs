@@ -18,7 +18,7 @@ if (fs.existsSync(license)) fs.copyFileSync(license, path.join(releaseRoot, "LIC
 
 const indexPath = path.join(releaseRoot, "index.html");
 const index = fs.readFileSync(indexPath, "utf8").replace(
-  '<script type="module" src="../src/app/main.ts"></script>',
+  '<script type="module" src="/src/app/main.ts"></script>',
   '<script defer src="dist/robbo.js"></script>'
 );
 fs.writeFileSync(indexPath, index);
