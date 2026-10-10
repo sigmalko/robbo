@@ -18,6 +18,7 @@
     <section class="game" aria-label="Robbo game" data-label="label.robbo.game">
       <div class="viewport">
         <canvas id="board" tabindex="0" width="512" height="512" aria-label="Game board. Use arrow keys to move and Control plus arrow to fire." data-label="label.game.board.use.arrow.keys.to.move.and.control"></canvas>
+        <div id="milestone-notice" role="status" aria-live="polite" hidden><strong id="milestone-title"></strong><span id="milestone-help"></span></div>
         <div id="overlay"><h2 id="state-title">Ready, Robbo?</h2><p id="state-description">Collect every required screw, then enter the flashing ship.</p><button id="continue" data-text="ui.start.game">Start game</button></div>
       </div>
       <div class="hud" aria-label="Inventory" data-label="label.inventory" aria-live="off">

@@ -16,6 +16,7 @@ async function main() {
     await page.getByRole('button', { name: 'Reset saved progress' }).click();
     await page.getByText('Replay / bug report', { exact: true }).click();
     await page.getByRole('button', { name: 'Record fresh attempt' }).click();
+    await page.waitForFunction(() => document.getElementById('board').dataset.effect !== 'arrival');
     await page.keyboard.press('ArrowLeft'); await page.waitForTimeout(150);
     await page.locator('#pause').click(); await page.waitForTimeout(250);
     const snapshot = await page.locator('#board').getAttribute('data-robot');

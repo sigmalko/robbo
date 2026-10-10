@@ -22,7 +22,7 @@ async function main() {
       server.once('exit', () => reject(Error('Server exited before startup')));
     });
     browser = await chromium.launch({ executablePath: process.env.ROBBO_CHROMIUM, args: ['--no-sandbox'] });
-    for (const base of ['http://127.0.0.1:8080', pathToFileURL(path.join(root, 'index.html')).href]) {
+    for (const base of [`http://127.0.0.1:${process.env.ROBBO_TEST_PORT || 8080}`, pathToFileURL(path.join(root, 'index.html')).href]) {
       const page = await browser.newPage();
       page.setDefaultTimeout(10000);
       const errors = [];
@@ -43,6 +43,7 @@ async function main() {
       assert.match(await page.locator('#board').getAttribute('aria-label'), /arrow keys/);
 
       await page.locator('#continue').click();
+      await page.waitForFunction(() => document.getElementById('board').dataset.effect !== 'arrival');
       assert.equal(await page.evaluate(() => 'robboTest' in window), false, 'Test harness must be absent in normal play');
       assert.equal(await page.locator('#remaining').getAttribute('data-value'), '6');
       await page.keyboard.press('ArrowLeft');
@@ -83,7 +84,7 @@ async function main() {
       assert.equal((await state()).ammo, 8);
       for (let i = 0; i < 5; i++) await command(0);
       assert.equal((await state()).status, 'won');
-      await page.evaluate(() => window.robboTest.step(5)); assert.equal((await state()).planet, 2);
+      await page.evaluate(() => window.robboTest.step(36)); assert.equal((await state()).planet, 2);
       await load(['ssssssss', 's.Rb...s', 's......s', 'ssssssss']);
       await page.evaluate(() => window.robboTest.inventory(2));
       await command(0, true); const firstFrame = await page.locator('#board').screenshot();
@@ -117,8 +118,8 @@ async function main() {
       await page.locator('#mute').uncheck(); await page.locator('#enable-sound').click();
       await page.waitForTimeout(200);
       const calls = await page.evaluate(() => window.audioCalls);
-      for (const fragment of ['ammo_02', 'shoot_default', 'screw2', 'key2', 'door_02', 'end_default', 'bomb', 'kill', 'teleport', 'capsule', 'box', 'gun_default', 'magnet', 'walk_01']) assert(calls.some(url => url.includes(fragment)), `Missing native audio playback: ${fragment}`);
-      assert(calls.some(url => url.endsWith('/screw.ogg')), 'Missing distinct exit-open playback');
+      for (const fragment of ['ammo_02', 'shoot_default', 'screw2', 'key2', 'door_02', 'ship-departure', 'bomb', 'kill', 'teleport', 'planet-arrival', 'box', 'gun_default', 'magnet', 'walk_01']) assert(calls.some(url => url.includes(fragment)), `Missing native audio playback: ${fragment}`);
+      assert(calls.some(url => url.endsWith('/ship-ready.wav')), 'Missing distinct exit-open playback');
       assert.deepEqual((await state()).failures, [], 'Native audio playback must succeed after activation');
       assert.deepEqual(errors, [], 'Browser errors during gameplay');
       if (process.env.ROBBO_CAPTURE_DIR) {

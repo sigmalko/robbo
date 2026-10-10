@@ -10,6 +10,7 @@ const contentTypes = {
   ".map": "application/json; charset=utf-8",
   ".mp3": "audio/mpeg",
   ".ogg": "audio/ogg",
+  ".wav": "audio/wav",
   ".png": "image/png",
   ".txt": "text/plain; charset=utf-8"
 };
@@ -34,6 +35,6 @@ http.createServer((request, response) => {
     });
     response.end(content);
   });
-}).listen(8080, "127.0.0.1", () => {
-  console.log("Robbo is available at http://127.0.0.1:8080");
+}).listen(Number(process.env.ROBBO_TEST_PORT || 8080), "127.0.0.1", () => {
+  console.log(`Robbo is available at http://127.0.0.1:${process.env.ROBBO_TEST_PORT || 8080}`);
 });

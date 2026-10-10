@@ -16,6 +16,7 @@ import { GameAudio } from '../browser/audio/game-audio';
 import { Camera } from '../presentation/rendering/camera';
 import { seededRandom } from '../engine/model';
 import type { Direction, LevelData } from '../engine/model';
+import { MilestoneEffects, CURTAIN_CLOSE_START_MS } from '../presentation/rendering/milestone-effects';
 
 /** Compose the browser controls, session and rendering lifecycle. */
 export function startGame(): void {
@@ -66,6 +67,8 @@ export function startGame(): void {
   let generation = -1;
   let previousStatus = 'playing';
   let manualTicks = false;
+  const effects = new MilestoneEffects();
+  let lastPresentationTick = performance.now();
 
   function refreshPlanets(): void {
     const selector = element<HTMLSelectElement>('planet');
@@ -77,9 +80,14 @@ export function startGame(): void {
   }
   refreshPlanets();
   function clearInput(): void { input.release(); touchControls?.reset(); session.world.clearInput(); }
-  function activateAudio(): void { element('audio-status').textContent = ''; audio.unlock(session.world.drainEvents()); }
+  function activateAudio(): void {
+    element('audio-status').textContent = '';
+    const events = session.world.drainEvents(); effects.consume(events, session.world); audio.unlock(events);
+  }
   function focusWorld(): void {
-    clearInput(); audio.stop(); camera.reset();
+    clearInput(); audio.stop(); effects.reset(); camera.reset();
+    previousStatus = session.world.status;
+    if (session.started && !replay.viewing) effects.arrive(session.world);
     camera.focus(session.world);
     refreshPlanets();
     element<HTMLSelectElement>('planet').value = String(session.planet);
@@ -102,7 +110,7 @@ export function startGame(): void {
     element('campaign-total').textContent = `of ${session.pack.levels.length}`;
     element('campaign-intro').textContent = `A journey through ${session.pack.levels.length} planets`;
     if (generation !== session.generation) { generation = session.generation; focusWorld(); }
-    renderer.draw(world, view, session.pack.id, session.planet);
+    drawBoard(view);
     canvas.dataset.camera = `${camera.x},${camera.y}`;
     canvas.dataset.tick = String(world.tick);
     canvas.dataset.state = session.completed ? 'completed' : world.status;
@@ -119,10 +127,28 @@ export function startGame(): void {
     else if (session.completed) { title = text('state.complete'); description = text('state.completeHelp', { total: session.pack.levels.length }); action = text('action.again'); }
     else if (session.paused) { title = text('state.paused'); description = text('state.pausedHelp'); action = text('action.resume'); }
     else if (world.status === 'dead' && world.statusTicks >= 4) { title = text('state.dead'); description = text('state.deadHelp'); action = text('action.retry'); }
-    else if (world.status === 'won') { title = text('state.won'); description = session.planet === session.pack.levels.length ? text('state.final') : text('state.next'); }
+    // Flight is drawn on the board, so the modal must not obscure it.
     element('overlay').hidden = !title;
     element('state-title').textContent = title; element('state-description').textContent = description;
     element<HTMLButtonElement>('continue').hidden = !action; element('continue').textContent = action;
+    const effect = effects.frame;
+    const notice = element('milestone-notice');
+    notice.hidden = !effect || session.paused || !session.started || session.completed
+      || (effect.kind === 'departure' && effect.elapsed >= 600 && effect.elapsed < CURTAIN_CLOSE_START_MS);
+    notice.dataset.kind = effect?.kind ?? '';
+    notice.dataset.reduced = String(reducedMotion.matches);
+    const milestoneTitle = effect?.kind === 'unlock' ? text('milestone.secured') : effect?.kind === 'departure' ? text('milestone.departure', { planet: session.planet }) : text('milestone.arrival', { planet: session.planet });
+    const milestoneHelp = effect?.kind === 'unlock' ? text('milestone.ready') : effect?.kind === 'departure' ? session.planet === session.pack.levels.length ? text('state.final') : text('milestone.destination', { planet: session.planet + 1 }) : text('ui.intro');
+    if (element('milestone-title').textContent !== milestoneTitle) element('milestone-title').textContent = milestoneTitle;
+    if (element('milestone-help').textContent !== milestoneHelp) element('milestone-help').textContent = milestoneHelp;
+    element('remaining').closest('.hud > div')!.classList.toggle('screws-secured', world.remaining === 0 && session.started);
+  }
+  function drawBoard(view = renderer.resize(session.world)): void {
+    const interpolation = manualTicks || session.paused ? 0 : Math.min(100, Math.max(0, performance.now() - lastPresentationTick));
+    const effect = effects.sample(interpolation);
+    canvas.dataset.effect = effect?.kind ?? '';
+    canvas.dataset.effectTime = String(Math.round(effect?.elapsed ?? 0));
+    renderer.draw(session.world, view, session.pack.id, session.planet, effect, reducedMotion.matches);
   }
   const replay = replayControls(packs, () => session, value => { session = value; generation = -1; clearInput(); audio.stop(); render(); });
   function replayAction(action: ReplayAction): void {
@@ -135,18 +161,27 @@ export function startGame(): void {
   }
   function retryWithPresentation(): void {
     if (replay.viewing) replay.cancel();
-    replayAction({ type: 'retry' }); clearInput();
+    replayAction({ type: session.world.status === 'won' ? 'restart' : 'retry' }); clearInput();
     if (session.world.status === 'dead') camera.returnToStart(session.world, reducedMotion.matches);
   }
   function advance(): void {
     if (replay.viewing) return;
+    lastPresentationTick = performance.now();
+    const arriving = effects.holdingArrival;
+    if (!session.paused && session.started && !session.completed) effects.update(100);
+    if (arriving) {
+      clearInput(); if (!session.paused) audio.consume(session.world.drainEvents()); render(); return;
+    }
+    if (effects.holdingDeparture && session.world.status === 'won' && !session.paused) { clearInput(); render(); return; }
     pollInput();
     const command = input.command();
     if (command && !session.paused && session.world.status === 'playing') replayAction({ type: 'command', direction: command.direction, fire: command.fire });
     const oldPlanet = session.planet, oldCompleted = session.completed;
     if (replay.recorder) { try { replay.recorder.step(); } catch (error) { replay.cancel(); element('audio-status').textContent = error instanceof Error ? error.message : 'Recording stopped'; } } else session.step();
     if (location.hash !== '#test' && (oldPlanet !== session.planet || oldCompleted !== session.completed)) progress.advance(session.pack.id, session.planet, session.completed);
-    if (generation !== session.generation) { generation = session.generation; focusWorld(); }
+    if (generation !== session.generation) {
+      generation = session.generation; focusWorld();
+    }
     if (session.world.status !== previousStatus || session.world.teleportTicks) clearInput();
     if (session.world.status !== previousStatus) {
       audio.stop();
@@ -154,24 +189,32 @@ export function startGame(): void {
     }
     previousStatus = session.world.status;
     if (session.world.teleportTicks === 4) camera.focus(session.world);
-    camera.update(session.world, reducedMotion.matches); audio.consume(session.world.drainEvents());
+    const events = session.world.drainEvents();
+    effects.consume(events, session.world);
+    camera.update(session.world, reducedMotion.matches); audio.consume(events);
     render();
   }
   function startOrContinue(): void {
-    if (!session.started) session.start();
+    const resuming = session.paused;
+    if (!session.started) { session.start(); effects.arrive(session.world); }
     else if (session.completed) { replay.cancel(); session.newCampaign(); }
     else if (session.paused) replayAction({ type: 'pause' });
     else if (session.world.status === 'dead') { /* The automatic restart is already pending. */ }
-    render(); activateAudio();
+    render(); if (resuming) audio.resume(); else activateAudio();
     canvas.focus({ preventScroll: true });
+  }
+  function pauseOrResume(): void {
+    replayAction({ type: 'pause' }); clearInput();
+    if (session.paused) audio.pause(); else audio.resume();
+    render();
   }
   const resetProgress = document.createElement('button'); resetProgress.textContent = text('progress.reset');
   resetProgress.addEventListener('click', () => { replay.cancel(); progress.reset(); session.newCampaign(packs[0]); render(); });
   document.querySelector('.campaign-settings')!.append(resetProgress);
   element('continue').addEventListener('click', startOrContinue);
-  element('start').addEventListener('click', () => { if (session.started) { replay.cancel(); session.newCampaign(); } else session.start(); render(); activateAudio(); canvas.focus({ preventScroll: true }); });
+  element('start').addEventListener('click', () => { if (session.started) { replay.cancel(); session.newCampaign(); } else { session.start(); effects.arrive(session.world); } render(); activateAudio(); canvas.focus({ preventScroll: true }); });
   element('restart').addEventListener('click', () => { retryWithPresentation(); render(); activateAudio(); canvas.focus({ preventScroll: true }); });
-  element('pause').addEventListener('click', () => { replayAction({ type: 'pause' }); clearInput(); audio.stop(); render(); canvas.focus({ preventScroll: true }); });
+  element('pause').addEventListener('click', () => { pauseOrResume(); canvas.focus({ preventScroll: true }); });
   element<HTMLSelectElement>('pack').addEventListener('change', event => { replay.cancel(); session.newCampaign(packs.find(p => p.id === (event.target as HTMLSelectElement).value)); render(); });
   element<HTMLSelectElement>('planet').addEventListener('change', event => { replay.cancel(); session.selectPlanet(Number((event.target as HTMLSelectElement).value)); render(); });
   themeSelector.addEventListener('change', event => { void artwork.activate((event.target as HTMLSelectElement).value); });
@@ -180,15 +223,20 @@ export function startGame(): void {
   element<HTMLInputElement>('volume').addEventListener('input', event => { const volume = Number((event.target as HTMLInputElement).value) / 100; audio.setVolume(volume); preferences.apply({ volume }); });
   const inputOptions = {
     command: (direction: Direction, fire: boolean) => replayAction({ type: 'command', direction, fire }),
-    active: () => !replay.viewing && !session.paused && session.world.status === 'playing',
-    start: () => { if (!session.started) { session.start(); activateAudio(); } },
-    pause: () => { replayAction({ type: 'pause' }); clearInput(); audio.stop(); render(); },
+    active: () => !replay.viewing && !session.paused && !effects.holdingArrival && session.world.status === 'playing',
+    start: () => { if (!session.started) { session.start(); effects.arrive(session.world); render(); activateAudio(); } },
+    pause: pauseOrResume,
     retry: () => { retryWithPresentation(); render(); activateAudio(); }
   };
   const pollInput = attachInput(input, inputOptions);
   touchControls = attachTouch(input, inputOptions);
-  addEventListener('blur', () => { clearInput(); if (session.started && !session.paused && !session.completed) replayAction({ type: 'pause' }); audio.stop(); render(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { clearInput(); if (session.started && !session.paused && !session.completed) replayAction({ type: 'pause' }); audio.stop(); render(); } });
+  function pauseInBackground(): void {
+    clearInput();
+    if (session.started && !session.paused && !session.completed) { replayAction({ type: 'pause' }); audio.pause(); }
+    render();
+  }
+  addEventListener('blur', pauseInBackground);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pauseInBackground(); });
   let resizeFrame = 0;
   function scheduleResize(): void {
     if (resizeFrame) return;
@@ -229,6 +277,11 @@ export function startGame(): void {
   void artwork.activate(artwork.saved() ?? javaTheme.id);
   // Real-time rendering never catches up with an unbounded backlog after a suspended tab.
   setInterval(() => { if (!manualTicks) advance(); }, 100);
+  function animateFeedback(): void {
+    if (effects.frame && !manualTicks && !session.paused && !session.completed) drawBoard();
+    requestAnimationFrame(animateFeedback);
+  }
+  requestAnimationFrame(animateFeedback);
 
   // Opt-in deterministic harness for the packaged browser tests; absent in normal play.
   if (location.hash === '#test') {
@@ -244,12 +297,12 @@ export function startGame(): void {
       load(rows: string[], options: Record<string, number[]> = {}, seed = 1, realtime = false) {
         const data: LevelData = { ...packs[0].levels[0], rows, options, width: rows[0].length, height: rows.length, author: 'Deterministic browser test fixture', notes: 'Not an imported planet' };
         session.world = new GameWorld(data, seededRandom(seed)); session.started = true; session.paused = false; session.completed = false;
-        session.generation++; manualTicks = !realtime; render();
+        session.generation++; manualTicks = !realtime; render(); effects.reset(); render();
       },
       step(count = 1) { for (let i = 0; i < count; i++) advance(); },
       command(direction: Direction, fire = false) { session.command(direction, fire); },
       inventory(ammo: number, keys = 0) { session.world.ammo = ammo; session.world.keys = keys; render(); },
-      planet(number: number, packId = '02') { replay.cancel(); session.newCampaign(packs.find(p => p.id === packId)); session.selectPlanet(number); manualTicks = true; render(); },
+      planet(number: number, packId = '02') { replay.cancel(); session.newCampaign(packs.find(p => p.id === packId)); session.selectPlanet(number); manualTicks = true; render(); effects.reset(); render(); },
       snapshot() { const w = session.world; return { planet: session.planet, completed: session.completed, status: w.status, robot: [w.robot.x, w.robot.y], ammo: w.ammo, remaining: w.remaining, entities: [...w.entities.values()].map(e => ({ ...e })), events: [...audio.played], failures: [...audio.failures] }; },
       artworkFrames() {
         const atlas = artwork.atlas;
@@ -293,6 +346,40 @@ export function startGame(): void {
       },
       assert() { session.world.assertConsistent(); }
     };
+    // Visible controls for inspecting the real engine's effects in the in-app browser.
+    // They exist only in the explicitly requested deterministic test page.
+    if (new URLSearchParams(location.search).has('feedback-preview')) {
+      const fixture = () => {
+        const rows = [
+          'ssssssssssssssss', 's..............s', 's..ssss...sss..s',
+          's..............s', 's....RT...!....s',
+          's..............s', 's..sss....sss..s', 's..............s',
+          's....sss.......s', 's..............s', 'ssssssssssssssss'
+        ];
+        const data: LevelData = { ...packs[0].levels[0], rows, options: {}, width: 16, height: rows.length, author: 'Feedback test fixture', notes: 'Preview only; campaign progress is not saved' };
+        session.world = new GameWorld(data, seededRandom(1)); session.started = true; session.paused = false; session.completed = false;
+        session.generation++; manualTicks = true; render(); effects.reset(); render();
+      };
+      const controls = document.createElement('div'); controls.className = 'toolbar';
+      controls.setAttribute('aria-label', 'Feedback preview controls');
+      const button = (label: string, action: () => void) => {
+        const node = document.createElement('button'); node.textContent = label; node.addEventListener('click', action); controls.append(node);
+      };
+      button('Preview final screw', () => { fixture(); audio.unlock(); session.command(0); advance(); });
+      button('Preview take-off', () => {
+        fixture(); audio.unlock(); for (let i = 0; i < 5; i++) { session.command(0); advance(); }
+      });
+      button('Preview arrival', () => { fixture(); effects.arrive(session.world); audio.unlock(); render(); });
+      button('Advance 100 ms', () => advance());
+      button('Play animation', () => {
+        const kind = effects.frame?.kind;
+        fixture(); audio.unlock();
+        if (kind === 'arrival') { effects.arrive(session.world); render(); }
+        else for (let i = 0; i < (kind === 'departure' ? 5 : 1); i++) { session.command(0); advance(); }
+        manualTicks = false; canvas.focus({ preventScroll: true });
+      });
+      element('play-area').prepend(controls);
+    }
   }
 
 }

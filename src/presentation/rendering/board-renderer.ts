@@ -6,6 +6,8 @@ import { Camera } from './camera';
 import { frameFor } from './sprite-frames';
 import { viewportSize } from './viewport';
 import { drawJourneyFloor, drawJourneyWall } from './journey-terrain';
+import type { MilestoneFrame } from './milestone-effects';
+import { drawMilestone } from './milestone-renderer';
 
 export interface BoardArtwork {
   activeTheme: ThemeManifest;
@@ -57,7 +59,7 @@ export function createBoardRenderer(canvas: HTMLCanvasElement, camera: Camera, a
     return layer;
   }
 
-  function draw(world: GameWorld, view: ReturnType<typeof viewportSize>, packId: string, planet: number): void {
+  function draw(world: GameWorld, view: ReturnType<typeof viewportSize>, packId: string, planet: number, effect?: MilestoneFrame, reduced = false): void {
     const { activeTheme, atlas, displayAtlas, displayAtlasScale } = artwork();
     const journey = activeTheme.id.startsWith('planet-journey-');
     context.imageSmoothingEnabled = journey;
@@ -66,6 +68,11 @@ export function createBoardRenderer(canvas: HTMLCanvasElement, camera: Camera, a
     const offsetX = Math.max(0, (view.width - world.level.width * view.tileSize) / 2);
     const offsetY = Math.max(0, (view.height - world.level.height * view.tileSize) / 2);
     const journeyIndex = Number(activeTheme.id.split('-').at(-1)) - 1;
+    const sprite = (sx: number, sy: number, x: number, y: number, size = view.tileSize) => {
+      if (!displayAtlas) return;
+      const a = activeTheme.atlas;
+      context.drawImage(displayAtlas, (sx * a.stride + a.inset) * displayAtlasScale, (sy * a.stride + a.inset) * displayAtlasScale, a.cell * displayAtlasScale, a.cell * displayAtlasScale, x, y, size, size);
+    };
     // Static terrain only changes with the camera, layout, theme or wall geometry.
     if (journey) {
       const terrain = journeyTerrain(world, view, journeyIndex);
@@ -73,6 +80,19 @@ export function createBoardRenderer(canvas: HTMLCanvasElement, camera: Camera, a
     }
     if (atlas) for (const e of world.entities.values()) {
       const x = offsetX + (e.x - camera.x) * view.tileSize, y = offsetY + (e.y - camera.y) * view.tileSize;
+      if (effect?.kind === 'departure') {
+        if (e.kind === 'ship' && e.x === effect.x && e.y === effect.y) continue;
+        if (e.kind === 'robot') {
+          const p = Math.min(1, effect.elapsed / 220), size = view.tileSize * (1 - p * 0.6);
+          if (p < 1) {
+            context.save(); context.globalAlpha = 1 - p;
+            const [sx, sy] = frameFor(e, world);
+            sprite(sx, sy, x + (effect.x - e.x) * view.tileSize * p + (view.tileSize - size) / 2, y + (effect.y - e.y) * view.tileSize * p + (view.tileSize - size) / 2, size);
+            context.restore();
+          }
+          continue;
+        }
+      }
       if (x + view.tileSize <= 0 || y + view.tileSize <= 0 || x >= view.width || y >= view.height) continue;
       if (journey && e.kind === 'wall') {
         continue;
@@ -81,10 +101,13 @@ export function createBoardRenderer(canvas: HTMLCanvasElement, camera: Camera, a
         context.save(); context.fillStyle = '#080d1255'; context.beginPath();
         context.ellipse(x + view.tileSize / 2, y + view.tileSize * 28 / 32, (e.kind === 'robot' ? 8 : 10) * view.tileSize / 32, view.tileSize / 16, 0, 0, Math.PI * 2); context.fill(); context.restore();
       }
-      const [sx, sy] = frameFor(e, world), a = activeTheme.atlas;
-      context.drawImage(displayAtlas!, (sx * a.stride + a.inset) * displayAtlasScale, (sy * a.stride + a.inset) * displayAtlasScale, a.cell * displayAtlasScale, a.cell * displayAtlasScale, x, y, view.tileSize, view.tileSize);
+      const [sx, sy] = frameFor(e, world);
+      sprite(sx, sy, x, y);
     }
-
+    if (effect) drawMilestone(context, effect, view.width, view.height,
+      offsetX + (effect.x - camera.x + 0.5) * view.tileSize,
+      offsetY + (effect.y - camera.y + 0.5) * view.tileSize,
+      reduced, (x, y, size) => sprite(5, 1, x, y, size));
   }
   return { resize: resizeCanvas, draw };
 }
