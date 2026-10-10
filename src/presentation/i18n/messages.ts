@@ -1,5 +1,10 @@
 /** Stable English source strings. Catalogs are data, never HTML markup. */
 export const english = {
+  'milestone.secured': 'ALL SCREWS SECURED',
+  'milestone.ready': 'Ship powered up · Ready for take-off',
+  'milestone.departure': 'PLANET {planet} COMPLETE',
+  'milestone.destination': 'Setting course for planet {planet}…',
+  'milestone.arrival': 'PLANET {planet}',
   'exit.ready': 'Ship ready: enter the flashing ship to complete this planet.',
   'progress.reset': 'Reset saved progress',
   'preferences.reset': 'Reset sound preferences',

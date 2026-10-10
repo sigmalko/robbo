@@ -20,11 +20,30 @@ describe('Audio activation and lifecycle', () => {
     audio.unlock(); audio.stop();
     for (const type of Object.keys(soundFiles) as (keyof typeof soundFiles)[]) audio.consume([{ type, tick: 1 }]);
     expect(new Set(AudioFake.calls)).toHaveLength(17);
+    audio.stop(); AudioFake.calls = [];
     for (let i = 0; i < 20; i++) audio.play('bomb');
     expect(AudioFake.calls.filter(c => c.endsWith('/bomb.ogg'))).toHaveLength(4);
     audio.stop(); audio.setMuted(true); const count = AudioFake.calls.length; audio.play('kill'); expect(AudioFake.calls).toHaveLength(count);
     audio.setMuted(false); audio.setVolume(0.2); audio.play('kill'); expect(AudioFake.calls).toHaveLength(count + 1);
     await Promise.resolve(); expect(audio.failures.size).toBe(0);
+  });
+  it('prioritizes the final screw over overlapping footsteps and enemy calls', () => {
+    vi.stubGlobal('Audio', AudioFake); const audio = new GameAudio();
+    audio.unlock(); AudioFake.calls = [];
+    audio.consume([{ type: 'walk', tick: 1 }, { type: 'exit-open', tick: 1 }, { type: 'bird', tick: 1 }]);
+    expect(AudioFake.calls).toEqual(['sounds/ship-ready.wav']);
+    audio.setMuted(true); audio.consume([{ type: 'end', tick: 2 }]);
+    expect(AudioFake.calls).toHaveLength(1);
+  });
+  it('resumes an interrupted flight from its current audio position', () => {
+    vi.stubGlobal('Audio', AudioFake); const audio = new GameAudio();
+    audio.unlock(); audio.consume([{ type: 'end', tick: 1 }]);
+    const voices = (audio as unknown as { voices: Map<string, AudioFake[]> }).voices;
+    const flight = voices.get('end')![0]; flight.currentTime = 0.8;
+    audio.pause(); expect(flight.paused).toBe(true);
+    audio.resume(); expect(flight.paused).toBe(false); expect(flight.currentTime).toBe(0.8);
+    audio.pause(); audio.stop(); const count = AudioFake.calls.length;
+    audio.resume(); expect(AudioFake.calls).toHaveLength(count);
   });
   it('handles rejected playback and allows a later activation to recover', async () => {
     vi.stubGlobal('Audio', AudioFake); const messages: string[] = []; const audio = new GameAudio(m => messages.push(m));
